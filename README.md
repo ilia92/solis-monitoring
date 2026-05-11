@@ -138,26 +138,6 @@ pv_total_power_w{brand="solis",serial="1234ABCD5678"} 5531
 
 ---
 
-## Prometheus Integration
-
-The simplest integration uses the **textfile collector** of
-[`prometheus_node_exporter`](https://github.com/prometheus/node_exporter):
-
-```bash
-# /etc/cron.d/solis-monitor  (or a systemd timer)
-* * * * *  root  /path/to/solis-monitor.py --format prometheus \
-               > /var/lib/node_exporter/textfile_collector/solis.prom.tmp \
-               && mv /var/lib/node_exporter/textfile_collector/solis.prom.tmp \
-                     /var/lib/node_exporter/textfile_collector/solis.prom
-```
-
-The atomic `tmp → final` rename prevents Prometheus from reading a half-written file.
-
-For Grafana dashboards, all metrics carry `brand` and `serial` labels so multiple
-inverters can share a single Prometheus instance.
-
----
-
 ## Templates
 
 Output is rendered from Jinja2 templates in `./templates/`.
@@ -180,6 +160,7 @@ template file.
 
 | Device | Notes |
 |---|---|
+| Solis S6-EH3P(30-50)K-H | 3-phase hybrid |
 | Solis RHI-nK-48ES series | 3-phase hybrid |
 | Solis S6-EH1P(3-6)K-L | Single-phase hybrid |
 | S2-WL-ST LAN logger | Port 502 |
