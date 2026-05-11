@@ -1,10 +1,13 @@
-# solis-monitor
+# ☀️ solis-monitor
 
-A Modbus TCP poller for **Solis hybrid inverters** (RHI / S6 series and compatible).  
-Reads live data directly from the inverter's LAN logger and outputs it in either
-human-readable text or Prometheus exposition format — ready to scrape with
-[prometheus_node_exporter](https://github.com/prometheus/node_exporter)'s
-`textfile` collector, or any custom scraper.
+> **Know exactly what your solar system is doing — in real time.**
+
+`solis-monitor` talks directly to your **Solis hybrid inverter** over the local network
+(no cloud, no app, no account required) and gives you a clean snapshot of everything:
+PV production, battery state, grid flow, backup loads, temperatures, fault codes, and more.
+
+Output comes in two flavours — human-readable text you can read at a glance,
+or Prometheus metrics you can feed straight into Grafana.
 
 ---
 
