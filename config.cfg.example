@@ -1,0 +1,53 @@
+[SolisInverter]
+# Solis Inverter Configuration File
+
+# IP address of the logger device
+inverter_ip = <logger_ip>
+
+# Optional; 502 is common for newer S2-WL-ST, 8899 for some older loggers
+inverter_port = 502
+
+# Modbus device id / unit id
+slave_id = 1
+
+# Expected inverter serial – if mismatch, output is suppressed and error returned
+# Leave empty to skip serial check
+serial = <logger_serial>
+
+# Inverter rated power in kW – used to calculate load percentages
+inverter_power_kw = 30
+
+# ── Value Sanity Ranges ──────────────────────────────────────────────────────
+# Values outside these ranges are treated as invalid Modbus garbage and dropped.
+# Format: key_min / key_max  (same key names as SENSORS)
+# Voltages
+pv_voltage_min = 0
+pv_voltage_max = 1500
+ac_voltage_min = 0
+ac_voltage_max = 280
+backup_voltage_min = 0
+backup_voltage_max = 280
+battery_voltage_min = 0
+battery_voltage_max = 900
+
+# Currents
+pv_current_min = 0
+pv_current_max = 50
+ac_current_min = -100
+ac_current_max = 100
+battery_current_min = -300
+battery_current_max = 300
+
+# Power / Percentage
+pct_min = 0
+pct_max = 100
+power_w_min = -100000
+power_w_max = 100000
+
+# Temperature
+temperature_min = -20
+temperature_max = 100
+
+# Frequency
+frequency_min = 0
+frequency_max = 65
