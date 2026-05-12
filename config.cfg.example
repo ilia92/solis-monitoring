@@ -51,3 +51,21 @@ temperature_max = 100
 # Frequency
 frequency_min = 0
 frequency_max = 65
+
+# ── All-zeros block suppression ──────────────────────────────────────────────
+# Some register blocks legitimately return all zeros when a subsystem is off
+# (e.g. grid meter when the grid is disconnected).  Setting the flag below to
+# true disables the all-zeros warning and the automatic re-read for that block.
+#
+# Block names and the registers they cover:
+#   main    – 33004-33096  (serial, PV strings, inverter output, temp/freq/status)
+#   faults  – 33116-33121  (fault codes 01-05, operating status)
+#   battery – 33133-33179  (battery, backup, energy counters)
+#   grid    – 33251-33264  (grid meter voltages, currents, power)
+#   load    – 33580-33596  (household & backup load energy totals)
+#
+zeros_ok_main    = false
+zeros_ok_faults  = false
+zeros_ok_battery = false
+zeros_ok_grid    = false
+zeros_ok_load    = false

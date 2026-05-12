@@ -51,6 +51,15 @@ POLL_BLOCKS = [
     (33580, 17),  # household/backup load energies
 ]
 
+# Human-readable names for the blocks above (used in config: zeros_ok_<name>)
+POLL_BLOCK_NAMES = {
+    33004: "main",
+    33116: "faults",
+    33133: "battery",
+    33251: "grid",
+    33580: "load",
+}
+
 # ── Appendix 2 — full inverter status code map (register 33095) ──────────────
 STATUS_MAP = {
     0x0000: "Waiting",
@@ -428,6 +437,12 @@ def load_config():
         if min_v is not None and max_v is not None:
             ranges[min_key.replace("_min", "")] = (min_v, max_v)
 
+    zeros_ok = {
+        start
+        for start, name in POLL_BLOCK_NAMES.items()
+        if sec.getboolean(f"zeros_ok_{name}", fallback=False)
+    }
+
     return {
         "ip":             ip,
         "port":           sec.getint("inverter_port", fallback=502),
@@ -438,6 +453,7 @@ def load_config():
         "expected_serial": sec.get("serial", "").strip(),
         "inverter_power_w": fget("inverter_power_kw", 30.0) * 1000.0,
         "ranges":         ranges,
+        "zeros_ok":       zeros_ok,
         "_raw_sec":       sec,
     }
 
@@ -525,10 +541,12 @@ def read_registers(client, cfg):
     """
     Read all POLL_BLOCKS with per-block retries and an adaptive fallback.
     Also guards against all-zero blocks by re-reading once after a short delay.
+    Blocks listed in cfg["zeros_ok"] skip the all-zeros guard entirely.
     """
     regmap = {}
-    slave_id      = cfg["slave_id"]
+    slave_id       = cfg["slave_id"]
     use_zero_based = cfg["use_zero_based"]
+    zeros_ok       = cfg.get("zeros_ok", set())
 
     for start, count in POLL_BLOCKS:
         address = start - 1 if use_zero_based else start
@@ -559,17 +577,25 @@ def read_registers(client, cfg):
 
         # All-zeros guard: Solis sometimes returns 0x0000 for every register
         # during brief internal transitions even though the read succeeds.
+        # Skipped when zeros_ok_<name> = true in config (e.g. grid is physically off).
         elif _is_block_all_zeros(regmap, start, count):
-            print(
-                f"#WARN: block {start}-{start+count-1} returned all zeros – "
-                f"re-reading after {ZEROS_REREAD_DELAY}s", file=sys.stderr
-            )
-            time.sleep(ZEROS_REREAD_DELAY)
-            rr2 = client.read_input_registers(
-                address=address, count=count, device_id=slave_id
-            )
-            if not rr2.isError():
-                _store_block(regmap, start, rr2.registers)
+            block_name = POLL_BLOCK_NAMES.get(start, str(start))
+            if start in zeros_ok:
+                print(
+                    f"#INFO: block {start}-{start+count-1} ({block_name}) all zeros – "
+                    "accepted, skipping re-read", file=sys.stderr
+                )
+            else:
+                print(
+                    f"#WARN: block {start}-{start+count-1} returned all zeros – "
+                    f"re-reading after {ZEROS_REREAD_DELAY}s", file=sys.stderr
+                )
+                time.sleep(ZEROS_REREAD_DELAY)
+                rr2 = client.read_input_registers(
+                    address=address, count=count, device_id=slave_id
+                )
+                if not rr2.isError():
+                    _store_block(regmap, start, rr2.registers)
 
         time.sleep(INTER_BLOCK_DELAY)
 
