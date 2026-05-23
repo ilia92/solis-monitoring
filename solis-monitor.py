@@ -725,10 +725,11 @@ def build_context(values, cfg):
 
     grid_phases = []
     for ph in [1, 2, 3]:
-        v = num(values.get(f"inverter_voltage_l{ph}"))  # CT has no voltage sense; inverter V == grid V
-        a = num(values.get(f"grid_current_l{ph}"))
-        p = num(values.get(f"grid_power_l{ph}"))
-        pf = power_factor(p, abs(v * a))
+        v     = num(values.get(f"inverter_voltage_l{ph}"))  # CT has no voltage sense; inverter V == grid V
+        a     = num(values.get(f"grid_current_l{ph}"))
+        p_raw = num(values.get(f"grid_power_l{ph}"))        # Solis: positive=export, negative=import
+        p     = -p_raw                                        # flip to: positive=import, negative=export
+        pf    = power_factor(abs(p_raw), abs(v * a))         # always positive magnitude
         grid_phases.append({
             "name": f"L{ph}", "voltage": fmt1(v), "current": fmt2(a), "power": fmt0(p),
             "load_pct": load_pct(p, per_phase_w),
@@ -748,7 +749,7 @@ def build_context(values, cfg):
             "load_pct": load_pct(p, per_phase_w),
         })
 
-    total_grid  = num(values.get("grid_power_total"))
+    total_grid  = -num(values.get("grid_power_total"))  # Solis: positive=export → flip to positive=import
     inv_active  = num(values.get("inverter_active_power"))
     backup_total = num(values.get("backup_load_power"))
 
@@ -828,7 +829,7 @@ def build_context(values, cfg):
         "inverter_power_factor":     f"{inv_pf:.3f}" if inv_pf is not None else "N/A",
         "inverter_power_factor_num": inv_pf,
         "grid_phases":            grid_phases,
-        "grid_power_w":           f0s("grid_power_total"),
+        "grid_power_w":           fmt0(total_grid),
         "grid_power_abs_w":       fmt0(abs(total_grid)),
         "grid_direction":         "Importing" if total_grid >= 0 else "Exporting",
         "grid_power_pct":         load_pct(total_grid, rated_w),
