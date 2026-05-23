@@ -68,6 +68,11 @@ backup_load_power_w{brand="{{ brand }}",serial="{{ serial }}"} {{ backup_load_po
 # TYPE inverter_output_pct gauge
 inverter_output_pct{brand="{{ brand }}",serial="{{ serial }}"} {{ inverter_output_pct }}
 
+# HELP inverter_power_factor Inverter total power factor (active / apparent)
+# TYPE inverter_power_factor gauge
+{% if inverter_power_factor_num is not none %}inverter_power_factor{brand="{{ brand }}",serial="{{ serial }}"} {{ inverter_power_factor }}
+{% endif %}
+
 # HELP grid_power_pct Grid power as percent of rated capacity
 # TYPE grid_power_pct gauge
 grid_power_pct{brand="{{ brand }}",serial="{{ serial }}"} {{ grid_power_pct }}
@@ -75,6 +80,11 @@ grid_power_pct{brand="{{ brand }}",serial="{{ serial }}"} {{ grid_power_pct }}
 # HELP backup_power_pct Backup power as percent of rated capacity
 # TYPE backup_power_pct gauge
 backup_power_pct{brand="{{ brand }}",serial="{{ serial }}"} {{ backup_power_pct }}
+
+# HELP backup_power_factor Backup output total power factor (active / apparent)
+# TYPE backup_power_factor gauge
+{% if backup_power_factor_num is not none %}backup_power_factor{brand="{{ brand }}",serial="{{ serial }}"} {{ backup_power_factor }}
+{% endif %}
 
 # HELP grid_frequency_hz Grid frequency hertz
 # TYPE grid_frequency_hz gauge
@@ -108,10 +118,14 @@ grid_frequency_hz{brand="{{ brand }}",serial="{{ serial }}"} {{ grid_frequency_h
 # TYPE grid_current_a gauge
 {% for p in grid_phases %}grid_current_a{brand="{{ brand }}",serial="{{ serial }}",phase="{{ p.name }}"} {{ p.current }}
 {% endfor %}
-# HELP grid_phase_power_w Grid phase active power watts
+# HELP grid_phase_power_w Grid phase active power watts (CT)
 # TYPE grid_phase_power_w gauge
 {% for p in grid_phases %}grid_phase_power_w{brand="{{ brand }}",serial="{{ serial }}",phase="{{ p.name }}"} {{ p.power }}
 {% endfor %}
+# HELP grid_phase_power_factor Grid phase power factor (CT, signed)
+# TYPE grid_phase_power_factor gauge
+{% for p in grid_phases %}{% if p.power_factor_num is not none %}grid_phase_power_factor{brand="{{ brand }}",serial="{{ serial }}",phase="{{ p.name }}"} {{ p.power_factor }}
+{% endif %}{% endfor %}
 # HELP backup_voltage_v Backup output voltage volts
 # TYPE backup_voltage_v gauge
 {% for p in backup_phases %}backup_voltage_v{brand="{{ brand }}",serial="{{ serial }}",phase="{{ p.name }}"} {{ p.voltage }}

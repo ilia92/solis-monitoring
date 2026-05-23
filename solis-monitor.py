@@ -659,6 +659,12 @@ def load_pct(watts, rated_w):
         return 0
     return round(min(100.0, max(0.0, abs(num(watts)) / rated_w * 100.0)), 1)
 
+def power_factor(p_w, apparent_va):
+    """P / S clamped to [-1, 1]. Returns None when apparent power is too small to be meaningful."""
+    if abs(apparent_va) < 1.0:
+        return None
+    return max(-1.0, min(1.0, float(p_w) / float(apparent_va)))
+
 def prom_value(v):
     if not isinstance(v, (int, float)) or math.isnan(v):
         return None
@@ -719,12 +725,15 @@ def build_context(values, cfg):
 
     grid_phases = []
     for ph in [1, 2, 3]:
-        v = num(values.get(f"grid_voltage_l{ph}"))
+        v = num(values.get(f"inverter_voltage_l{ph}"))  # CT has no voltage sense; inverter V == grid V
         a = num(values.get(f"grid_current_l{ph}"))
         p = num(values.get(f"grid_power_l{ph}"))
+        pf = power_factor(p, abs(v * a))
         grid_phases.append({
             "name": f"L{ph}", "voltage": fmt1(v), "current": fmt2(a), "power": fmt0(p),
             "load_pct": load_pct(p, per_phase_w),
+            "power_factor": f"{pf:.3f}" if pf is not None else "N/A",
+            "power_factor_num": pf,
         })
 
     backup_phases = []
@@ -742,6 +751,18 @@ def build_context(values, cfg):
     total_grid  = num(values.get("grid_power_total"))
     inv_active  = num(values.get("inverter_active_power"))
     backup_total = num(values.get("backup_load_power"))
+
+    inv_total_apparent = sum(
+        num(values.get(f"inverter_voltage_l{ph}")) * num(values.get(f"inverter_current_l{ph}"))
+        for ph in [1, 2, 3]
+    )
+    inv_pf = power_factor(inv_active, inv_total_apparent)
+
+    backup_total_apparent = sum(
+        num(values.get(f"backup_voltage_l{ph}")) * num(values.get(f"backup_current_l{ph}"))
+        for ph in [1, 2, 3]
+    )
+    backup_pf = power_factor(backup_total, backup_total_apparent)
 
     f1s = lambda k: fmt1(values.get(k))
     f2s = lambda k: fmt2(values.get(k))
@@ -804,6 +825,8 @@ def build_context(values, cfg):
         "inverter_phases":        inverter_phases,
         "inverter_active_power_w": f0s("inverter_active_power"),
         "inverter_output_pct":    load_pct(inv_active, rated_w),
+        "inverter_power_factor":     f"{inv_pf:.3f}" if inv_pf is not None else "N/A",
+        "inverter_power_factor_num": inv_pf,
         "grid_phases":            grid_phases,
         "grid_power_w":           f0s("grid_power_total"),
         "grid_power_abs_w":       fmt0(abs(total_grid)),
@@ -812,6 +835,8 @@ def build_context(values, cfg):
         "backup_phases":          backup_phases,
         "backup_load_power_w":    f0s("backup_load_power"),
         "backup_power_pct":       load_pct(backup_total, rated_w),
+        "backup_power_factor":       f"{backup_pf:.3f}" if backup_pf is not None else "N/A",
+        "backup_power_factor_num":   backup_pf,
         "battery_soc_pct":        f1s("battery_soc"),
         "battery_soh_pct":        f1s("battery_soh"),
         "battery_voltage_v":      f1s("battery_voltage"),
