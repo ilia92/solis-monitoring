@@ -49,6 +49,5 @@ Status : {{ status }} ({{ status_hex }}) — {{ status_desc }}
 Op Flags: {{ op_status_label }} ({{ op_status_hex }})
 
 === Fault Registers ===
-{% for fkey, fd in fault_data.items() %}
-{{ fd.name | upper | replace("_"," ") }}: {{ fd.hex }}{% if fd.active %}  ⚠ {{ fd.label }}{% else %}  OK{% endif %}
+{% for fkey, fd in fault_data.items() %}{{ fd.name | upper | replace("_"," ") }}: {{ fd.hex }}  {{ "⚠ " + fd.label if fd.active else "OK" }}
 {% endfor %}
