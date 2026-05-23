@@ -18,7 +18,7 @@ Total Inverter Power: {{ inverter_active_power_w }}W, PF {{ inverter_power_facto
 === Grid Exchange (CT) ===
 {% for p in grid_phases %}{{ p.name }}: {{ p.voltage }}V, {{ p.current }}A, {{ p.power }}W, PF {{ p.power_factor }}, {{ p.load_pct if p.load_pct is not none else 'NaN' }}%
 {% endfor %}-------------------------
-Total Grid Power: {{ grid_power_abs_w }}W ({{ grid_direction }})  [{{ grid_power_pct if grid_power_pct is not none else 'NaN' }}% of rated]
+Total Grid Power: {{ grid_power_w }}W ({{ grid_direction }})  [{{ grid_power_pct if grid_power_pct is not none else 'NaN' }}% of rated]
 
 === Backup Power ===
 {% for p in backup_phases %}{{ p.name }}: {{ p.voltage }}V, {{ p.current }}A, {{ p.power }}W, {{ p.load_pct if p.load_pct is not none else 'NaN' }}%
