@@ -1,6 +1,8 @@
 === Inverter Status ===
 Status: {{ status }}
 Serial: {{ serial }}
+Rated Power: {{ inverter_rated_power_w }}W
+MPPT Inputs: {{ mppt_count }}
 DC Temperature: {{ inverter_temperature_c }}°C
 Battery Temperature: {{ battery_temperature_c }}°C
 Grid Frequency: {{ grid_frequency_hz }}Hz

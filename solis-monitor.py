@@ -452,6 +452,7 @@ def load_config():
         "config_path":    str(cfg_path),
         "expected_serial": sec.get("serial", "").strip(),
         "inverter_power_w": fget("inverter_power_kw", 30.0) * 1000.0,
+        "mppt_count":       sec.getint("mppt_count", fallback=4),
         "ranges":         ranges,
         "zeros_ok":       zeros_ok,
         "_raw_sec":       sec,
@@ -698,10 +699,11 @@ def status_description(code):
 # ── Template context builder ─────────────────────────────────────────────────
 
 def build_context(values, cfg):
-    rated_w = cfg["inverter_power_w"]
+    rated_w    = cfg["inverter_power_w"]
+    mppt_count = cfg.get("mppt_count", 4)
 
     pv_strings = []
-    for idx in range(1, 5):
+    for idx in range(1, mppt_count + 1):
         vraw = values.get(f"pv_voltage_{idx}")
         araw = values.get(f"pv_current_{idx}")
         v = num(vraw)
@@ -805,8 +807,10 @@ def build_context(values, cfg):
     status_desc     = STATUS_DESCRIPTION.get(status_code_int, status_raw) if status_code_int is not None else status_raw
 
     return {
-        "brand":        cfg["brand"],
-        "serial":       values.get("serial", ""),
+        "brand":                  cfg["brand"],
+        "serial":                 values.get("serial", ""),
+        "inverter_rated_power_w": int(rated_w),
+        "mppt_count":             mppt_count,
         "status":       status_raw,
         "status_hex":   status_hex,
         "status_desc":  status_desc,
@@ -925,7 +929,7 @@ def render(fmt, ctx, solis_specific=True):
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Solis Modbus poller")
-    parser.add_argument("--format", choices=["human", "prometheus"], default="human")
+    parser.add_argument("--format", choices=["human", "prometheus", "prometheus2"], default="human")
     parser.add_argument("--no-solis-specific", action="store_true",
                         help="Skip the solis-specific template section")
     return parser.parse_args()
